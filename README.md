@@ -15,11 +15,11 @@ npm test
 
 ## 项目简介
 原生TS开发报销审批系统
-src/main.ts         # global functions & mount methods / 全局函数与方法挂载
-src/render.ts       # page / modal render functions / 页面与弹窗渲染函数
-src/mockApi.ts      # mock data, type definitions, data api / Mock 数据、类型定义、数据接口
-src/index.html
-tests/mockApi.test.ts # unit test for mock api logic / Mock接口逻辑单元测试
+- src/main.ts         # global functions & mount methods / 全局函数与方法挂载
+- src/render.ts       # page / modal render functions / 页面与弹窗渲染函数
+- src/mockApi.ts      # mock data, type definitions, data api / Mock 数据、类型定义、数据接口
+- src/index.html
+- tests/mockApi.test.ts # unit test for mock api logic / Mock接口逻辑单元测试
 
 ## Features / 功能点
 1. Dual Role Login System / 双角色登录系统
