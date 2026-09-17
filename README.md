@@ -1,53 +1,88 @@
-# apply-system-demo
-报销审批系统（demo）
+# 通用申请审批系统 (Apply System)
 
-# How to Run / 运行方式
-- install dependencies / 安装依赖
-npm install
-- start dev server / 启动开发服务
-npm run dev
-- run unit tests / 执行单元测试
-npm test
+一个基于 **SvelteKit** 实现的通用申请（差旅 / 培训 / 请假）流程演示系统，覆盖申请提交、预览回改、审批流转、统计报表。
 
-# 报销审批系统前端 Demo
-> Coding challenge project built with TypeScript + Tailwind CSS, pure frontend mock system.
-> 基于 TypeScript + Tailwind CSS 的编程挑战项目，纯前端 Mock 系统
+## 功能
 
-## 项目简介
-原生TS开发报销审批系统
-- src/main.ts         # global functions & mount methods / 全局函数与方法挂载
-- src/render.ts       # page / modal render functions / 页面与弹窗渲染函数
-- src/mockApi.ts      # mock data, type definitions, data api / Mock 数据、类型定义、数据接口
-- src/index.html
-- tests/mockApi.test.ts # unit test for mock api logic / Mock接口逻辑单元测试
+- **通用申请流程**：差旅（travel）、培训（training）、请假（leave）三类申请，schema 驱动的动态表单
+- **表单 - 预览联动**：填写后进入预览页，逐字段展示，任意字段点击即可跳回表单对应位置修改
+- **草稿与提交**：支持存草稿（draft）、直接提交进入审批流
+- **审批状态机**：`draft → pending → approved | rejected | withdrawn`，多级审批（直属主管 → 财务/人事），驳回后修改可重新提交
+- **申请列表与详情**：状态 / 类型筛选、审批进度条、按角色执行审批操作、操作记录时间线
+- **统计报表**：ECharts 可视化（状态分布饼图、类型分布柱状图、部门/预算折线图、通过率）
+- **权限模拟**：申请人（user）/ 审批人（admin）两种视角登录，审批人可见未处理单据
 
-## Features / 功能点
-1. Dual Role Login System / 双角色登录系统
-   - 两种角色：申请人 / 审批人
-   - 申请人：提交报销申请、查看我的申请、编辑并重新提交被驳回的申请
-   - 审批人：查看待审批列表/我的列表。审批人提交的申请，创建后自动审批通过
-   - 用户信息，鼠标悬浮在用户名称时可查看用户详细信息
-2. Expense Application Modal / 报销申请
-   - 点击「报销申请」打开表单弹窗
-   - 支持新建报销申请和编辑已有申请
-3. Application List Page / 申请列表
-   - 申请人：仅能看到自己的申请记录
-   - 审批人：可在「审批列表」和「我的申请」两个 Tab 间切换
-   - 操作按钮：预览、编辑、重新提交、通过、驳回；不符合状态的按钮自动置灰禁用
-4. Statistics Summary Panel / 统计汇总面板
-   - 申请人：全部单据、待审批、已通过、已驳回数量
-   - 审批人：待审批、已通过、已驳回数量
-5. Detail Modal / 预览详情弹窗
-   - 点击预览，在弹窗中查看报销单完整信息
+## 技术栈
 
-## Unit Test / 测试用例
-1. getUserList：验证正常读取全部用户Mock数据，包含申请人、审批人
-2. getUserById：根据用户ID查询用户，不存在ID返回undefined
-3. getExpenseByApplicantId：按申请人ID过滤单据，仅返回对应申请人的申请记录
-4. getExpenseById：根据单据ID查询单条报销记录，不存在ID返回undefined
-5. createExpense：新增报销单，校验新增后列表数量增加，自动生成id
-6. updateExpense：更新单据字段，校验修改生效；传入不存在单据id返回null
+- SvelteKit 2 + Svelte 5（runes 模式）
+- TypeScript
+- Tailwind CSS v4
+- Apache ECharts
+- Vitest + Testing Library + jsdom（单元测试与组件测试）
+- pnpm（包管理）
+- adapter-node / Docker 部署
 
+## 快速开始
 
+```sh
+pnpm install
+pnpm run dev
+```
 
+## 脚本
 
+| 命令               | 说明                             |
+| ------------------ | -------------------------------- |
+| `pnpm run dev`     | 开发服务器                       |
+| `pnpm run check`   | svelte-check 类型检查            |
+| `pnpm test`        | 单元与组件测试（Vitest + jsdom） |
+| `pnpm run lint`    | Prettier 格式检查 + ESLint       |
+| `pnpm run format`  | Prettier 自动格式化              |
+| `pnpm run build`   | 生产构建（adapter-node）         |
+| `pnpm run preview` | 预览生产构建                     |
+
+## 项目结构
+
+```
+src/
+  lib/
+    types/            # 领域类型定义
+    config/schemas.ts # 申请类型 schema、审批链、状态/动作元信息
+    utils/validation.ts
+    machine/stateMachine.ts      # 状态转移机
+    services/applicationApi.ts   # mock 数据服务（Promise 模拟网络延迟）
+    stores/           # 登录态、申请数据 store
+    components/       # StatusTag / ApplicationForm / PreviewPanel /
+                      # ApplicationTable / ProgressBar / BaseChart / ApplicationWizard
+  routes/
+    login/    # 登录
+    list/     # 申请列表（筛选）
+    apply/    # 新建申请（+apply/[id] 编辑）
+    detail/   # 申请详情（审批操作 / 进度 / 记录）
+    report/   # 统计报表
+```
+
+## 测试
+
+```sh
+pnpm test
+```
+
+测试覆盖：
+
+- 状态机流转（各状态合法 / 非法动作、终态、可执行动作列表）
+- 字段校验（必填、数字范围、日期格式、错误映射）
+- mock 数据服务（新建、草稿、多级审批推进、驳回重提、撤销、统计聚合）
+- 组件（StatusTag 文案、ApplicationForm 渲染与交互、PreviewPanel 预览与跳转）
+
+## Docker 部署
+
+```sh
+docker build -t apply-system .
+docker run -p 3000:3000 apply-system
+```
+
+## 说明
+
+- 数据为浏览器端内存 mock（Promise + 延迟模拟网络），刷新后重置为种子数据
+- 登录为明文的模拟实现，仅用于演示角色权限

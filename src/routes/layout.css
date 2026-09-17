@@ -1,0 +1,30 @@
+@import 'tailwindcss';
+
+@theme {
+	--color-apple: #0071e3;
+	--color-apple-hover: #0077ed;
+	--color-canvas: #f5f5f7;
+
+	--font-sans:
+		-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', Roboto,
+		'Helvetica Neue', Arial, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+
+	--shadow-card:
+		0 0 0 1px rgb(0 0 0 / 0.04), 0 1px 2px rgb(0 0 0 / 0.03), 0 12px 32px -12px rgb(0 0 0 / 0.12);
+	--shadow-card-hover: 0 0 0 1px rgb(0 0 0 / 0.06), 0 20px 44px -16px rgb(0 0 0 / 0.2);
+	--shadow-pop: 0 0 0 1px rgb(0 0 0 / 0.05), 0 24px 60px -12px rgb(0 0 0 / 0.24);
+}
+
+@layer base {
+	body {
+		background-color: var(--color-canvas);
+		color: var(--color-neutral-800);
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		font-feature-settings: 'tnum';
+	}
+
+	::selection {
+		background-color: rgb(0 113 227 / 0.18);
+	}
+}
