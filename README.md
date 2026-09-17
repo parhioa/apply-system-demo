@@ -19,6 +19,7 @@
 - Tailwind CSS v4
 - Apache ECharts
 - Vitest + Testing Library + jsdom（单元测试与组件测试）
+- husky + lint-staged（git 提交前自动校验）
 - pnpm（包管理）
 - adapter-node / Docker 部署
 
@@ -74,6 +75,15 @@ pnpm test
 - 字段校验（必填、数字范围、日期格式、错误映射）
 - mock 数据服务（新建、草稿、多级审批推进、驳回重提、撤销、统计聚合）
 - 组件（StatusTag 文案、ApplicationForm 渲染与交互、PreviewPanel 预览与跳转）
+
+## Git Hooks（提交前校验）
+
+提交时由 **husky + lint-staged** 自动对暂存文件执行校验，有问题会直接阻止提交：
+
+- `.js / .ts / .svelte / .css`：`eslint --fix` + `prettier --write`
+- `.md / .json / .yaml / .yml`：`prettier --write`
+
+钩子在 `pnpm install`（`prepare: husky`）时自动安装，无需手动配置。紧急跳过可加 `--no-verify`。
 
 ## Docker 部署
 
