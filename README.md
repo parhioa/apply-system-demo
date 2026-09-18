@@ -123,10 +123,17 @@ E2E 用例放在 `tests/e2e/`，运行后会额外生成 `playwright-report/` �
 
 ## Docker 部署
 
+仓库内置 `Dockerfile`（多阶段：pnpm 安装依赖 -> 构建 -> 运行 adapter-node 产物），需先安装 Docker：
+
 ```sh
 docker build -t apply-system .
 docker run -p 3000:3000 apply-system
 ```
+
+要点：
+
+- 服务默认监听 `$PORT`（3000），换端口用 `docker run -p 8080:3000 -e PORT=3000`
+- 数据是浏览器端内存 mock，**容器重启后数据重置**为种子数据，仅适合演示，不适合持久化存储
 
 ## 说明
 
