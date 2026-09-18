@@ -406,6 +406,7 @@ export async function createApplication(input: CreateApplicationInput): Promise<
 		updateTime: nowIso
 	};
 	db.push(item);
+	console.log(`[mock-api] 新建申请 ${item.id}（${item.type} -> ${item.status}）`);
 	return delay(clone(item));
 }
 
@@ -479,6 +480,7 @@ export async function applyTransition(
 	}
 
 	item.updateTime = nowIso;
+	console.log(`[mock-api] ${prevStatus} -> ${item.status} (${item.id}, ${action})`);
 	return delay(clone(item));
 }
 

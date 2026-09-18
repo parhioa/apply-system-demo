@@ -1,5 +1,4 @@
 import type { ApplicationItem, FieldSchema, FieldValue } from '$lib/types';
-import { getApplicationTypeMeta } from '$lib/config/schemas';
 
 /** 校验单个字段，返回错误信息，通过返回 null */
 export function validateField(schema: FieldSchema, value: FieldValue | undefined): string | null {
@@ -66,11 +65,7 @@ export function amountOf(item: ApplicationItem): number {
 	return Number.isFinite(n) ? n : 0;
 }
 
-/** 申请类型的展示 label */
-export function typeLabelOf(item: ApplicationItem): string {
-	return getApplicationTypeMeta(item.type).label;
-}
-
+/** 时间戳格式化为日期（yyyy-MM-dd） */
 export function formatTime(iso: string): string {
 	return iso.slice(0, 10);
 }

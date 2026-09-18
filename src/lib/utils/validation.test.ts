@@ -62,7 +62,7 @@ describe('validateFields', () => {
 	});
 });
 
-describe('summaryOf / amountOf / typeLabelOf', () => {
+describe('summaryOf / amountOf', () => {
 	it('差旅摘要包含目的地', () => {
 		expect(summaryOf(createItem({}))).toContain('上海');
 	});

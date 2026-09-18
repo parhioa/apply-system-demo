@@ -21,6 +21,9 @@ export default defineConfig({
 	test: {
 		environment: 'jsdom',
 		globals: true,
-		expect: { requireAssertions: true }
+		expect: { requireAssertions: true },
+		include: ['src/**/*.test.ts'],
+		reporters: ['default', 'html'],
+		outputFile: { html: './test-report/index.html' }
 	}
 });

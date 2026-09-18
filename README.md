@@ -18,7 +18,8 @@
 - TypeScript
 - Tailwind CSS v4
 - Apache ECharts
-- Vitest + Testing Library + jsdom（单元测试与组件测试）
+- Vitest + Testing Library + jsdom（单元测试与组件测试，带 HTML 报告）
+- Playwright（端到端测试）
 - husky + lint-staged（git 提交前自动校验）
 - pnpm（包管理）
 - adapter-node / Docker 部署
@@ -32,15 +33,18 @@ pnpm run dev
 
 ## 脚本
 
-| 命令               | 说明                             |
-| ------------------ | -------------------------------- |
-| `pnpm run dev`     | 开发服务器                       |
-| `pnpm run check`   | svelte-check 类型检查            |
-| `pnpm test`        | 单元与组件测试（Vitest + jsdom） |
-| `pnpm run lint`    | Prettier 格式检查 + ESLint       |
-| `pnpm run format`  | Prettier 自动格式化              |
-| `pnpm run build`   | 生产构建（adapter-node）         |
-| `pnpm run preview` | 预览生产构建                     |
+| 命令                   | 说明                                               |
+| ---------------------- | -------------------------------------------------- |
+| `pnpm run dev`         | 开发服务器                                         |
+| `pnpm run check`       | svelte-check 类型检查                              |
+| `pnpm test`            | 单元与组件测试（Vitest + jsdom），并生成 HTML 报告 |
+| `pnpm run test:e2e`    | 端到端测试（Playwright + Chromium）                |
+| `pnpm run test:e2e:ui` | 端到端测试（Playwright 交互式 UI 模式）            |
+| `pnpm run test:report` | 运行单元测试并自动打开 HTML 测试报告               |
+| `pnpm run lint`        | Prettier 格式检查 + ESLint                         |
+| `pnpm run format`      | Prettier 自动格式化                                |
+| `pnpm run build`       | 生产构建（adapter-node）                           |
+| `pnpm run preview`     | 预览生产构建                                       |
 
 ## 项目结构
 
@@ -61,9 +65,15 @@ src/
     apply/    # 新建申请（+apply/[id] 编辑）
     detail/   # 申请详情（审批操作 / 进度 / 记录）
     report/   # 统计报表
+tests/
+  e2e/        # Playwright 端到端用例
+scripts/
+  open-report.mjs  # 跑完单测后自动打开 HTML 报告
 ```
 
 ## 测试
+
+### 单元 / 组件测试
 
 ```sh
 pnpm test
@@ -75,6 +85,32 @@ pnpm test
 - 字段校验（必填、数字范围、日期格式、错误映射）
 - mock 数据服务（新建、草稿、多级审批推进、驳回重提、撤销、统计聚合）
 - 组件（StatusTag 文案、ApplicationForm 渲染与交互、PreviewPanel 预览与跳转）
+
+每次运行都会在 `test-report/` 下生成一个可交互的 **HTML 测试报告**（需安装 `@vitest/ui`），
+包含用例通过/失败数、每个用例耗时、失败堆栈等信息。使用 `pnpm run test:report`
+跑完测试后会自动启动本地服务并在浏览器中打开报告，也可以手动用：
+
+```sh
+pnpm exec vite preview --outDir test-report
+```
+
+### 端到端测试（Playwright）
+
+```sh
+pnpm exec playwright install chromium   # 首次使用需安装浏览器
+pnpm run test:e2e
+```
+
+覆盖真实浏览器中的完整业务流程：
+
+- 未登录访问受保护页自动跳转登录页
+- 申请人视角只能看到自己的申请、列表状态筛选
+- 申请人创建差旅申请 -> 预览 -> 提交 -> 状态变为待审批
+- 多级审批：直属主管通过后仍需财务审批，末级通过后才变为已通过
+- 驳回后申请人可修改并重新提交
+- 统计报表页指标与图表渲染
+
+E2E 用例放在 `tests/e2e/`，运行后会额外生成 `playwright-report/` 可视化报告。
 
 ## Git Hooks（提交前校验）
 
