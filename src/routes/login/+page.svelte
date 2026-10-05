@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { users } from '$lib/services/applicationApi';
-	import { login } from '$lib/stores/auth';
-	import type { User } from '$lib/types';
+	import { users } from '../../services/applicationApi';
+	import { login } from '../../stores/auth';
+	import type { User } from '../../types';
 
 	function handleLogin(user: User) {
 		if (login(user.id)) goto('/list');

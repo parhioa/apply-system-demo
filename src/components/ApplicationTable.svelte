@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { ApplicationItem } from '$lib/types';
+	import type { ApplicationItem } from '../types';
 	import StatusTag from './StatusTag.svelte';
-	import { amountOf, formatTime, summaryOf } from '$lib/utils/validation';
-	import { getApplicationTypeMeta } from '$lib/config/schemas';
+	import { amountOf, formatTime, summaryOf } from '../utils/validation';
+	import { getApplicationTypeMeta } from '../config/schemas';
 
 	let {
 		items,

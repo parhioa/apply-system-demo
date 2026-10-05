@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
-import type { User } from '$lib/types';
-import { getUserById } from '$lib/services/applicationApi';
+import type { User } from '../types';
+import { getUserById } from '../services/applicationApi';
 
 export const currentUser = writable<User | null>(null);
 

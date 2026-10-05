@@ -1,4 +1,4 @@
-import type { ApplicationItem, FieldSchema, FieldValue } from '$lib/types';
+import type { ApplicationItem, FieldSchema, FieldValue } from '../types';
 
 /** 校验单个字段，返回错误信息，通过返回 null */
 export function validateField(schema: FieldSchema, value: FieldValue | undefined): string | null {

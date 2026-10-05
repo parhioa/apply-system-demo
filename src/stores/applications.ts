@@ -1,22 +1,27 @@
 import { writable } from 'svelte/store';
-import type { ApplicationItem, FieldValue, TransitionAction } from '$lib/types';
+import type { ApplicationItem, FieldValue, TransitionAction } from '../types';
 import {
 	applyTransition,
 	createApplication,
 	getApplications,
 	updateApplicationFields,
 	type CreateApplicationInput
-} from '$lib/services/applicationApi';
+} from '../services/applicationApi';
 
 export const applications = writable<ApplicationItem[]>([]);
 export const loading = writable(false);
 
+/** 并发请求计数：只有全部请求结束才置为不加载，避免竞态提前熄灭 loading */
+let pendingCount = 0;
+
 export async function loadApplications(): Promise<void> {
+	pendingCount += 1;
 	loading.set(true);
 	try {
 		applications.set(await getApplications());
 	} finally {
-		loading.set(false);
+		pendingCount -= 1;
+		if (pendingCount === 0) loading.set(false);
 	}
 }
 

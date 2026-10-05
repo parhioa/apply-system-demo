@@ -2,11 +2,11 @@
 	import { goto } from '$app/navigation';
 	import { get } from 'svelte/store';
 	import { tick } from 'svelte';
-	import { APPLICATION_TYPES, getFieldSchemas } from '$lib/config/schemas';
-	import { currentUser } from '$lib/stores/auth';
-	import { saveApplication, saveFieldEdit, runTransition } from '$lib/stores/applications';
-	import type { ApplicationItem, ApplicationType, FieldValue } from '$lib/types';
-	import { validateFields } from '$lib/utils/validation';
+	import { APPLICATION_TYPES, getFieldSchemas } from '../config/schemas';
+	import { currentUser } from '../stores/auth';
+	import { saveApplication, saveFieldEdit, runTransition } from '../stores/applications';
+	import type { ApplicationItem, ApplicationType, FieldValue } from '../types';
+	import { validateFields } from '../utils/validation';
 	import ApplicationForm from './ApplicationForm.svelte';
 	import PreviewPanel from './PreviewPanel.svelte';
 

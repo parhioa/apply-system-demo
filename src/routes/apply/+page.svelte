@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ApplicationWizard from '$lib/components/ApplicationWizard.svelte';
+	import ApplicationWizard from '../../components/ApplicationWizard.svelte';
 </script>
 
 <ApplicationWizard />

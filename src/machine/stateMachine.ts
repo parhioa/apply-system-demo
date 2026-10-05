@@ -1,4 +1,4 @@
-import type { ApplicationStatus, TransitionAction } from '$lib/types';
+import type { ApplicationStatus, TransitionAction } from '../types';
 
 /**
  * 审批状态机定义。
@@ -20,9 +20,10 @@ export const TRANSITIONS: Record<
 	withdrawn: {}
 };
 
-/** 判断某状态下某动作是否合法 */
+/** 判断某状态下某动作是否合法；未知状态一律视为不可流转 */
 export function canTransition(from: ApplicationStatus, action: TransitionAction): boolean {
-	return action in TRANSITIONS[from];
+	const table = TRANSITIONS[from];
+	return table ? action in table : false;
 }
 
 /** 返回动作后的目标状态；不合法时返回 null */
@@ -36,5 +37,5 @@ export function nextStatus(
 
 /** 从状态机派生某状态可执行的动作列表 */
 export function allowedActions(from: ApplicationStatus): TransitionAction[] {
-	return Object.keys(TRANSITIONS[from]) as TransitionAction[];
+	return Object.keys(TRANSITIONS[from] ?? {}) as TransitionAction[];
 }

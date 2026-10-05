@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { EChartsCoreOption } from 'echarts/core';
-	import BaseChart from '$lib/components/BaseChart.svelte';
-	import { APPLICATION_TYPES, STATUS_META } from '$lib/config/schemas';
-	import { aggregateStatistics } from '$lib/services/applicationApi';
-	import { applications, loadApplications } from '$lib/stores/applications';
+	import BaseChart from '../../components/BaseChart.svelte';
+	import { APPLICATION_TYPES, STATUS_META } from '../../config/schemas';
+	import { aggregateStatistics } from '../../services/applicationApi';
+	import { applications, loadApplications } from '../../stores/applications';
 
 	let stats = $derived(aggregateStatistics($applications));
 

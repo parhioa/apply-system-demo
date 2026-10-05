@@ -1,5 +1,5 @@
-import { APPROVER_NAME_BY_ROLE, FLOW_BY_TYPE } from '$lib/config/schemas';
-import { nextStatus } from '$lib/machine/stateMachine';
+import { APPROVER_NAME_BY_ROLE, FLOW_BY_TYPE } from '../config/schemas';
+import { nextStatus } from '../machine/stateMachine';
 import type {
 	ApplicationItem,
 	ApplicationType,
@@ -7,12 +7,14 @@ import type {
 	FieldValue,
 	TransitionAction,
 	User
-} from '$lib/types';
+} from '../types';
 
-const NETWORK_DELAY_MS = 250;
+const DEFAULT_NETWORK_DELAY_MS = 250;
+
+let networkDelayMs = DEFAULT_NETWORK_DELAY_MS;
 
 function delay<T>(value: T): Promise<T> {
-	return new Promise((resolve) => setTimeout(() => resolve(value), NETWORK_DELAY_MS));
+	return new Promise((resolve) => setTimeout(() => resolve(value), networkDelayMs));
 }
 
 function clone<T>(value: T): T {
@@ -520,4 +522,9 @@ export function aggregateStatistics(list: ApplicationItem[]) {
 // 供测试重置数据源
 export function __resetDb() {
 	db = clone(seed);
+}
+
+// 供测试把模拟网络延迟调到 0，避免用例等待
+export function __setNetworkDelay(ms: number) {
+	networkDelayMs = ms;
 }

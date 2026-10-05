@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { ACTION_META, getApplicationTypeMeta, getFieldSchemas } from '$lib/config/schemas';
-	import { currentUser } from '$lib/stores/auth';
-	import { runTransition } from '$lib/stores/applications';
-	import { getApplicationById } from '$lib/services/applicationApi';
-	import type { ApplicationItem } from '$lib/types';
-	import StatusTag from '$lib/components/StatusTag.svelte';
-	import ProgressBar from '$lib/components/ProgressBar.svelte';
-	import { formatTime } from '$lib/utils/validation';
+	import { ACTION_META, getApplicationTypeMeta, getFieldSchemas } from '../../../config/schemas';
+	import { currentUser } from '../../../stores/auth';
+	import { runTransition } from '../../../stores/applications';
+	import { getApplicationById } from '../../../services/applicationApi';
+	import type { ApplicationItem } from '../../../types';
+	import StatusTag from '../../../components/StatusTag.svelte';
+	import ProgressBar from '../../../components/ProgressBar.svelte';
+	import { formatTime } from '../../../utils/validation';
 
 	let { params } = $props();
 

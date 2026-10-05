@@ -3,7 +3,7 @@ import type {
 	ApplicationType,
 	ApplicationTypeMeta,
 	FieldSchema
-} from '$lib/types';
+} from '../types';
 
 // ===== 申请类型元信息 =====
 export const APPLICATION_TYPES: ApplicationTypeMeta[] = [

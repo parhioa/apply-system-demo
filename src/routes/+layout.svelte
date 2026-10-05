@@ -2,8 +2,8 @@
 	import './layout.css';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { currentUser, logout } from '$lib/stores/auth';
-	import { loadApplications } from '$lib/stores/applications';
+	import { currentUser, logout } from '../stores/auth';
+	import { loadApplications } from '../stores/applications';
 
 	let { children } = $props();
 

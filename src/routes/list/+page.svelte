@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import ApplicationTable from '$lib/components/ApplicationTable.svelte';
-	import { STATUS_META } from '$lib/config/schemas';
-	import { currentUser } from '$lib/stores/auth';
-	import { applications, loadApplications } from '$lib/stores/applications';
-	import { APPLICATION_TYPES } from '$lib/config/schemas';
-	import type { ApplicationStatus, ApplicationType } from '$lib/types';
+	import ApplicationTable from '../../components/ApplicationTable.svelte';
+	import { STATUS_META } from '../../config/schemas';
+	import { currentUser } from '../../stores/auth';
+	import { applications, loadApplications } from '../../stores/applications';
+	import { APPLICATION_TYPES } from '../../config/schemas';
+	import type { ApplicationStatus, ApplicationType } from '../../types';
 
 	let statusFilter: ApplicationStatus | 'all' = $state('all');
 	let typeFilter: ApplicationType | 'all' = $state('all');

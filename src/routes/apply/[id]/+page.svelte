@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import ApplicationWizard from '$lib/components/ApplicationWizard.svelte';
-	import { getApplicationById } from '$lib/services/applicationApi';
-	import type { ApplicationItem } from '$lib/types';
+	import ApplicationWizard from '../../../components/ApplicationWizard.svelte';
+	import { getApplicationById } from '../../../services/applicationApi';
+	import type { ApplicationItem } from '../../../types';
 
 	let { params } = $props();
 

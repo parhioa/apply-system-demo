@@ -14,9 +14,11 @@ function runAndWait(cmd, args) {
 }
 
 async function startServer() {
-	return spawn('python3', ['-m', 'http.server', String(PORT), '--directory', OUTPUT_DIR], {
-		stdio: 'inherit'
-	});
+	return spawn(
+		'pnpm',
+		['exec', 'vite', 'preview', '--outDir', OUTPUT_DIR, '--port', String(PORT), '--strictPort'],
+		{ stdio: 'inherit' }
+	);
 }
 
 async function waitForReady() {

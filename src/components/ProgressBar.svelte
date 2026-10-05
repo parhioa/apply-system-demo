@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ApplicationItem, ApprovalStep } from '$lib/types';
+	import type { ApplicationItem, ApprovalStep } from '../types';
 
 	let { item }: { item: ApplicationItem } = $props();
 

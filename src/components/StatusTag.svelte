@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { STATUS_META } from '$lib/config/schemas';
-	import type { ApplicationStatus } from '$lib/types';
+	import { STATUS_META } from '../config/schemas';
+	import type { ApplicationStatus } from '../types';
 
 	let { status }: { status: ApplicationStatus } = $props();
 </script>

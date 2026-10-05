@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { FieldSchema, FieldValue } from '$lib/types';
+	import type { FieldSchema, FieldValue } from '../types';
 
 	let {
 		schemas,

@@ -50,15 +50,14 @@ pnpm run dev
 
 ```
 src/
-  lib/
-    types/            # 领域类型定义
-    config/schemas.ts # 申请类型 schema、审批链、状态/动作元信息
-    utils/validation.ts
-    machine/stateMachine.ts      # 状态转移机
-    services/applicationApi.ts   # mock 数据服务（Promise 模拟网络延迟）
-    stores/           # 登录态、申请数据 store
-    components/       # StatusTag / ApplicationForm / PreviewPanel /
-                      # ApplicationTable / ProgressBar / BaseChart / ApplicationWizard
+  types/            # 领域类型定义
+  config/schemas.ts # 申请类型 schema、审批链、状态/动作元信息
+  utils/validation.ts
+  machine/stateMachine.ts      # 状态转移机
+  services/applicationApi.ts   # mock 数据服务（Promise 模拟网络延迟）
+  stores/           # 登录态、申请数据 store
+  components/       # StatusTag / ApplicationForm / PreviewPanel /
+                    # ApplicationTable / ProgressBar / BaseChart / ApplicationWizard
   routes/
     login/    # 登录
     list/     # 申请列表（筛选）
@@ -71,6 +70,8 @@ scripts/
   open-report.mjs  # 跑完单测后自动打开 HTML 报告
 ```
 
+单元测试与被测模块同目录（`xxx.test.ts`），方便就近维护。
+
 ## 测试
 
 ### 单元 / 组件测试
@@ -79,12 +80,20 @@ scripts/
 pnpm test
 ```
 
-测试覆盖：
+共 11 个测试文件、162 个用例，重点覆盖正常路径与边界/异常路径：
 
-- 状态机流转（各状态合法 / 非法动作、终态、可执行动作列表）
-- 字段校验（必填、数字范围、日期格式、错误映射）
-- mock 数据服务（新建、草稿、多级审批推进、驳回重提、撤销、统计聚合）
-- 组件（StatusTag 文案、ApplicationForm 渲染与交互、PreviewPanel 预览与跳转）
+| 模块                      | 覆盖内容                                                                                                                                                                                                                                                                             |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `services/applicationApi` | 查询排序与深拷贝隔离、新建（草稿/提交/申请人不存在/入参被外部改写）、字段更新（整体替换、空对象、单据不存在）、多级审批推进、驳回重提重置审批链、撤销、未知操作人、**状态×动作非法流转矩阵遍历**、非法流转不污染数据、统计聚合（空列表不除零、通过率取整、月度升序、金额跳过非法值） |
+| `stores/auth`             | 登录成功、**登录失败（未知/空串/大小写不匹配）返回 false 且不覆盖已有登录态**、重复登录、登出与登出幂等、订阅通知                                                                                                                                                                    |
+| `stores/applications`     | loading 置位与复位、请求失败的错误上抛与列表不变、并发加载的竞态、保存/更新/流转成功与失败路径                                                                                                                                                                                       |
+| `machine/stateMachine`    | 各状态合法与非法动作、转移表覆盖全部状态、目标状态合法性、三个函数结论一致、未知状态/未知动作兜底、无自环、终态不可流转                                                                                                                                                              |
+| `config/schemas`          | 申请类型与字段 schema 完整性、select 候选项、number 范围合法性、审批链角色与审批人映射、状态/动作元信息全覆盖                                                                                                                                                                        |
+| `utils/validation`        | 必填/非必填、number 非法值与闭区间边界（NaN、Infinity、字符串数字）、date 格式、错误收集、摘要与金额兜底、日期格式化                                                                                                                                                                 |
+| `components/*`            | StatusTag 全状态、ApplicationForm 五类控件与回调/禁用/错误、PreviewPanel 占位符与跳转、ProgressBar 四种步骤状态、ApplicationTable 空态/金额/点击                                                                                                                                     |
+
+另外提供两个测试钩子：`__resetDb()` 重置 mock 数据源，`__setNetworkDelay(ms)` 把模拟网络延迟调为 0，
+避免用例等待真实延迟。
 
 每次运行都会在 `test-report/` 下生成一个可交互的 **HTML 测试报告**（需安装 `@vitest/ui`），
 包含用例通过/失败数、每个用例耗时、失败堆栈等信息。使用 `pnpm run test:report`
@@ -127,7 +136,8 @@ E2E 用例放在 `tests/e2e/`，运行后会额外生成 `playwright-report/` �
 
 ```sh
 docker build -t apply-system .
-docker run -p 3000:3000 apply-system
+# docker run -p 3000:3000 apply-system
+docker run -p 3000:3000 apply-system:latest
 ```
 
 要点：
