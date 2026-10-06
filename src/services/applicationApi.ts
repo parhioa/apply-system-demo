@@ -1,4 +1,4 @@
-import { APPROVER_NAME_BY_ROLE, FLOW_BY_TYPE } from '../config/schemas';
+import { APPROVER_NAME_BY_ROLE, FIELD_SCHEMAS, FLOW_BY_TYPE } from '../config/schemas';
 import { nextStatus } from '../machine/stateMachine';
 import type {
 	ApplicationItem,
@@ -8,6 +8,7 @@ import type {
 	TransitionAction,
 	User
 } from '../types';
+import { validateFields } from '../utils/validation';
 
 const DEFAULT_NETWORK_DELAY_MS = 250;
 
@@ -33,7 +34,8 @@ function genId(): string {
 export const users: User[] = [
 	{ id: 'u1', name: '张三', department: '研发部', role: 'applicant' },
 	{ id: 'u2', name: '李四', department: '研发部', role: 'approver' },
-	{ id: 'u3', name: '王五', department: '财务部', role: 'approver' }
+	{ id: 'u3', name: '王五', department: '财务部', role: 'approver' },
+	{ id: 'u4', name: '赵六', department: '市场部', role: 'applicant' }
 ];
 
 // ===== 构造审批链 =====
@@ -355,6 +357,275 @@ const seed: ApplicationItem[] = [
 		auditLog: [],
 		createTime: '2026-09-16T05:00:00.000Z',
 		updateTime: '2026-09-16T05:00:00.000Z'
+	},
+	{
+		// 驳回后重新提交，第一级已通过、卡在财务审批：审计链含 resubmit
+		id: 'A1010',
+		type: 'travel',
+		applicantId: 'u1',
+		applicantName: '张三',
+		department: '研发部',
+		fields: {
+			destination: '成都',
+			startDate: '2026-10-20',
+			endDate: '2026-10-22',
+			transportation: 'car',
+			amount: 4600,
+			reason: '客户答谢会'
+		},
+		status: 'pending',
+		flow: [
+			{
+				role: '直属主管',
+				name: '李四',
+				status: 'approved',
+				comment: '调整后行程合理',
+				time: '2026-10-02T02:00:00.000Z'
+			},
+			{ role: '财务审批', name: '王五', status: 'pending' }
+		],
+		currentStepIndex: 1,
+		auditLog: [
+			{ action: 'submit', operatorName: '张三', comment: '', time: '2026-10-01T01:00:00.000Z' },
+			{
+				action: 'reject',
+				operatorName: '李四',
+				comment: '金额超出标准，需压缩预算',
+				time: '2026-10-01T09:00:00.000Z'
+			},
+			{
+				action: 'resubmit',
+				operatorName: '张三',
+				comment: '已改为自驾，压缩预算',
+				time: '2026-10-02T01:00:00.000Z'
+			},
+			{
+				action: 'approve',
+				operatorName: '李四',
+				comment: '调整后行程合理',
+				time: '2026-10-02T02:00:00.000Z'
+			}
+		],
+		createTime: '2026-10-01T01:00:00.000Z',
+		updateTime: '2026-10-02T02:00:00.000Z'
+	},
+	{
+		// 市场部（第三个部门）的已通过单：让部门分布图多一根柱子
+		id: 'A1011',
+		type: 'training',
+		applicantId: 'u4',
+		applicantName: '赵六',
+		department: '市场部',
+		fields: {
+			courseName: '品牌营销与增长',
+			institution: '中欧商学院',
+			startDate: '2026-07-20',
+			endDate: '2026-07-22',
+			amount: 5200,
+			reason: '支撑新品牌发布'
+		},
+		status: 'approved',
+		flow: [
+			{
+				role: '直属主管',
+				name: '李四',
+				status: 'approved',
+				comment: '同意',
+				time: '2026-07-10T02:00:00.000Z'
+			},
+			{
+				role: '人事审批',
+				name: '王五',
+				status: 'approved',
+				comment: '名额充足',
+				time: '2026-07-11T01:00:00.000Z'
+			}
+		],
+		currentStepIndex: 2,
+		auditLog: [
+			{ action: 'submit', operatorName: '赵六', comment: '', time: '2026-07-10T01:00:00.000Z' },
+			{
+				action: 'approve',
+				operatorName: '李四',
+				comment: '同意',
+				time: '2026-07-10T02:00:00.000Z'
+			},
+			{
+				action: 'approve',
+				operatorName: '王五',
+				comment: '名额充足',
+				time: '2026-07-11T01:00:00.000Z'
+			}
+		],
+		createTime: '2026-07-10T01:00:00.000Z',
+		updateTime: '2026-07-11T01:00:00.000Z'
+	},
+	{
+		// 赵六的第二条：登录新账号后列表非空，且能看到"只属于自己"的差异
+		id: 'A1012',
+		type: 'leave',
+		applicantId: 'u4',
+		applicantName: '赵六',
+		department: '市场部',
+		fields: {
+			leaveType: 'personal',
+			startDate: '2026-10-27',
+			endDate: '2026-10-28',
+			days: 2,
+			reason: '搬家'
+		},
+		status: 'rejected',
+		flow: [
+			{
+				role: '直属主管',
+				name: '李四',
+				status: 'rejected',
+				comment: '当周有发布会，延后再说',
+				time: '2026-10-04T03:00:00.000Z'
+			},
+			{ role: '人事审批', name: '王五', status: 'pending' }
+		],
+		currentStepIndex: 0,
+		auditLog: [
+			{ action: 'submit', operatorName: '赵六', comment: '', time: '2026-10-04T01:00:00.000Z' },
+			{
+				action: 'reject',
+				operatorName: '李四',
+				comment: '当周有发布会，延后再说',
+				time: '2026-10-04T03:00:00.000Z'
+			}
+		],
+		createTime: '2026-10-04T01:00:00.000Z',
+		updateTime: '2026-10-04T03:00:00.000Z'
+	},
+	{
+		// 最早的一条：把月度趋势图左端拉到 2026-04
+		id: 'A1013',
+		type: 'travel',
+		applicantId: 'u2',
+		applicantName: '李四',
+		department: '研发部',
+		fields: {
+			destination: '杭州',
+			startDate: '2026-04-30',
+			endDate: '2026-05-01',
+			transportation: 'train',
+			amount: 680,
+			reason: '季度客户回访'
+		},
+		status: 'approved',
+		flow: [
+			{
+				role: '直属主管',
+				name: '李四',
+				status: 'approved',
+				comment: '同意',
+				time: '2026-04-25T02:00:00.000Z'
+			},
+			{
+				role: '财务审批',
+				name: '王五',
+				status: 'approved',
+				comment: '预算内',
+				time: '2026-04-26T01:00:00.000Z'
+			}
+		],
+		currentStepIndex: 2,
+		auditLog: [
+			{ action: 'submit', operatorName: '李四', comment: '', time: '2026-04-25T01:00:00.000Z' },
+			{
+				action: 'approve',
+				operatorName: '李四',
+				comment: '同意',
+				time: '2026-04-25T02:00:00.000Z'
+			},
+			{
+				action: 'approve',
+				operatorName: '王五',
+				comment: '预算内',
+				time: '2026-04-26T01:00:00.000Z'
+			}
+		],
+		createTime: '2026-04-25T01:00:00.000Z',
+		updateTime: '2026-04-26T01:00:00.000Z'
+	},
+	{
+		// 大额差旅：让 amountByType 里 travel 明显高于其它类型
+		id: 'A1014',
+		type: 'travel',
+		applicantId: 'u3',
+		applicantName: '王五',
+		department: '财务部',
+		fields: {
+			destination: '东京',
+			startDate: '2026-08-15',
+			endDate: '2026-08-21',
+			transportation: 'flight',
+			amount: 12800,
+			reason: '年度海外客户拜访'
+		},
+		status: 'approved',
+		flow: [
+			{
+				role: '直属主管',
+				name: '李四',
+				status: 'approved',
+				comment: '同意',
+				time: '2026-08-12T02:00:00.000Z'
+			},
+			{
+				role: '财务审批',
+				name: '王五',
+				status: 'approved',
+				comment: '预算内，同意',
+				time: '2026-08-12T06:00:00.000Z'
+			}
+		],
+		currentStepIndex: 2,
+		auditLog: [
+			{ action: 'submit', operatorName: '王五', comment: '', time: '2026-08-12T01:00:00.000Z' },
+			{
+				action: 'approve',
+				operatorName: '李四',
+				comment: '同意',
+				time: '2026-08-12T02:00:00.000Z'
+			},
+			{
+				action: 'approve',
+				operatorName: '王五',
+				comment: '预算内，同意',
+				time: '2026-08-12T06:00:00.000Z'
+			}
+		],
+		createTime: '2026-08-12T01:00:00.000Z',
+		updateTime: '2026-08-12T06:00:00.000Z'
+	},
+	{
+		// 最新的一条：月度趋势图右端落在 2026-10
+		id: 'A1015',
+		type: 'training',
+		applicantId: 'u1',
+		applicantName: '张三',
+		department: '研发部',
+		fields: {
+			courseName: 'Svelte 5 深入实战',
+			institution: '极客时间',
+			startDate: '2026-11-03',
+			endDate: '2026-11-05',
+			amount: 1200,
+			reason: '技术栈升级'
+		},
+		status: 'pending',
+		flow: [
+			{ role: '直属主管', name: '李四', status: 'pending' },
+			{ role: '人事审批', name: '王五', status: 'pending' }
+		],
+		currentStepIndex: 0,
+		auditLog: [
+			{ action: 'submit', operatorName: '张三', comment: '', time: '2026-10-05T01:00:00.000Z' }
+		],
+		createTime: '2026-10-05T01:00:00.000Z',
+		updateTime: '2026-10-05T01:00:00.000Z'
 	}
 ];
 
@@ -389,6 +660,12 @@ export interface CreateApplicationInput {
 export async function createApplication(input: CreateApplicationInput): Promise<ApplicationItem> {
 	const user = getUserById(input.applicantId);
 	if (!user) throw new Error('申请人不存在');
+	// 存草稿不校验任何字段；只有直接提交才校验（必填 / 数字 / 日期格式 / 日期顺序）
+	if (input.submitNow) {
+		const fieldErrors = validateFields(FIELD_SCHEMAS[input.type], input.fields);
+		const firstError = Object.values(fieldErrors)[0];
+		if (firstError) throw new Error(firstError);
+	}
 	const nowIso = now();
 	const flow = buildFlow(input.type);
 	const item: ApplicationItem = {
@@ -418,6 +695,7 @@ export async function updateApplicationFields(
 ): Promise<ApplicationItem> {
 	const item = db.find((it) => it.id === id);
 	if (!item) throw new Error('单据不存在');
+	// 保存不校验：草稿允许残缺与倒置日期，完整性由「提交」那一关卡住
 	item.fields = { ...fields };
 	item.updateTime = now();
 	return delay(clone(item));
@@ -441,6 +719,10 @@ export async function applyTransition(
 	const prevStatus = item.status;
 
 	if (action === 'submit') {
+		// 草稿允许残缺，提交不允许：字段完整性在唯一的收口处校验
+		const fieldErrors = validateFields(FIELD_SCHEMAS[item.type], item.fields);
+		const firstFieldError = Object.values(fieldErrors)[0];
+		if (firstFieldError) throw new Error(firstFieldError);
 		// 提交 / 重新提交：重置审批链从头开始
 		item.flow = buildFlow(item.type);
 		item.currentStepIndex = 0;

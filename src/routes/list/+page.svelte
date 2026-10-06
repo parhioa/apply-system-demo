@@ -4,7 +4,7 @@
 	import ApplicationTable from '../../components/ApplicationTable.svelte';
 	import { STATUS_META } from '../../config/schemas';
 	import { currentUser } from '../../stores/auth';
-	import { applications, loadApplications } from '../../stores/applications';
+	import { applications, loadApplications, scopeToUser } from '../../stores/applications';
 	import { APPLICATION_TYPES } from '../../config/schemas';
 	import type { ApplicationStatus, ApplicationType } from '../../types';
 
@@ -14,10 +14,7 @@
 	const isApprover = $derived($currentUser?.role === 'approver');
 
 	const filtered = $derived(
-		$applications
-			.filter(
-				(item) => isApprover || ($currentUser !== null && item.applicantId === $currentUser.id)
-			)
+		scopeToUser($applications, $currentUser)
 			.filter((item) => statusFilter === 'all' || item.status === statusFilter)
 			.filter((item) => typeFilter === 'all' || item.type === typeFilter)
 	);

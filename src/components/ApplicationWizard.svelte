@@ -32,6 +32,7 @@
 	$effect(() => {
 		if (existing) {
 			type = existing.type;
+			console.log('values', existing.fields);
 			values = { ...existing.fields };
 			errors = {};
 			step = 'form';

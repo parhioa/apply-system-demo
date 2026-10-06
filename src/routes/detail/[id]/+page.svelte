@@ -16,6 +16,7 @@
 	let notFound = $state(false);
 	let comment = $state('');
 	let busy = $state(false);
+	let actionError = $state('');
 
 	function getSchemasOf(value: ApplicationItem | null) {
 		return value ? getFieldSchemas(value.type) : [];
@@ -39,10 +40,13 @@
 	async function act(action: 'approve' | 'reject' | 'withdraw' | 'submit') {
 		if (action === 'reject' && !comment.trim()) return;
 		busy = true;
+		actionError = '';
 		try {
 			await runTransition(item!.id, action, comment.trim(), $currentUser?.id ?? '');
 			comment = '';
 			await refresh();
+		} catch (err) {
+			actionError = err instanceof Error ? err.message : '操作失败，请重试';
 		} finally {
 			busy = false;
 		}
@@ -158,6 +162,21 @@
 					驳回
 				</button>
 			</div>
+		</div>
+	{/if}
+
+	{#if actionError}
+		<div
+			class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-red-50 px-4 py-3 text-[13px] text-red-600"
+		>
+			<span>{actionError}</span>
+			<button
+				type="button"
+				onclick={() => goto(`/apply/${item!.id}`)}
+				class="font-medium underline underline-offset-2 transition-colors hover:text-red-700"
+			>
+				去修改 →
+			</button>
 		</div>
 	{/if}
 

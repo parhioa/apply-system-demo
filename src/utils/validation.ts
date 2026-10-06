@@ -31,6 +31,35 @@ export function validateField(schema: FieldSchema, value: FieldValue | undefined
 	}
 }
 
+/** 跨字段校验：date 字段声明了 after 时，不得早于参照字段。返回 { 字段key: 错误信息 } */
+export function validateCrossFields(
+	schemas: FieldSchema[],
+	values: Record<string, FieldValue>,
+	/** 单字段校验已有的错误：这些字段不再重复报顺序问题 */
+	reserved: Record<string, string> = {}
+): Record<string, string> {
+	const errors: Record<string, string> = {};
+	const byName = new Map(schemas.map((schema) => [schema.name, schema]));
+
+	for (const schema of schemas) {
+		if (schema.type !== 'date' || !schema.after || reserved[schema.name]) continue;
+
+		const base = byName.get(schema.after);
+		if (!base || base.type !== 'date' || reserved[base.name]) continue;
+
+		const value = values[schema.name];
+		const baseValue = values[base.name];
+		if (value === undefined || value === '' || baseValue === undefined || baseValue === '') {
+			continue;
+		}
+		// yyyy-MM-dd 字符串天然可按字典序比较，格式已由 validateField 保证
+		if (String(value) < String(baseValue)) {
+			errors[schema.name] = `${schema.label}不能早于${base.label}`;
+		}
+	}
+	return errors;
+}
+
 /** 校验一组字段，返回 { 字段key: 错误信息 } */
 export function validateFields(
 	schemas: FieldSchema[],
@@ -41,7 +70,7 @@ export function validateFields(
 		const error = validateField(schema, values[schema.name]);
 		if (error) errors[schema.name] = error;
 	}
-	return errors;
+	return { ...errors, ...validateCrossFields(schemas, values, errors) };
 }
 
 /** 列表页展示用的摘要 */

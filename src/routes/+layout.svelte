@@ -3,7 +3,6 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { currentUser, logout } from '../stores/auth';
-	import { loadApplications } from '../stores/applications';
 
 	let { children } = $props();
 
@@ -14,10 +13,11 @@
 	];
 
 	$effect(() => {
+		console.log('layout effect triggered');
 		const user = $currentUser;
-		if (!user && page.url.pathname !== '/login') goto('/login');
+		if (!user) goto('/login');
 		if (user && page.url.pathname === '/login') goto('/list');
-		if (user) loadApplications();
+		// if (user) loadApplications();
 	});
 
 	function handleLogout() {

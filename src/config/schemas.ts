@@ -27,7 +27,7 @@ export const FIELD_SCHEMAS: Record<ApplicationType, FieldSchema[]> = {
 			placeholder: '例如：上海'
 		},
 		{ name: 'startDate', label: '开始日期', type: 'date', required: true },
-		{ name: 'endDate', label: '结束日期', type: 'date', required: true },
+		{ name: 'endDate', label: '结束日期', type: 'date', required: true, after: 'startDate' },
 		{
 			name: 'transportation',
 			label: '交通方式',
@@ -71,7 +71,7 @@ export const FIELD_SCHEMAS: Record<ApplicationType, FieldSchema[]> = {
 			placeholder: '机构名称'
 		},
 		{ name: 'startDate', label: '开始日期', type: 'date', required: true },
-		{ name: 'endDate', label: '结束日期', type: 'date', required: true },
+		{ name: 'endDate', label: '结束日期', type: 'date', required: true, after: 'startDate' },
 		{
 			name: 'amount',
 			label: '培训费用',
@@ -95,7 +95,7 @@ export const FIELD_SCHEMAS: Record<ApplicationType, FieldSchema[]> = {
 			]
 		},
 		{ name: 'startDate', label: '开始日期', type: 'date', required: true },
-		{ name: 'endDate', label: '结束日期', type: 'date', required: true },
+		{ name: 'endDate', label: '结束日期', type: 'date', required: true, after: 'startDate' },
 		{ name: 'days', label: '请假天数', type: 'number', required: true, min: 0.5, max: 365 },
 		{ name: 'reason', label: '请假事由', type: 'textarea', required: true }
 	]

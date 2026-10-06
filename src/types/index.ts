@@ -39,13 +39,16 @@ export interface FieldSchema {
 	min?: number;
 	/** number 类型最大值 */
 	max?: number;
+	/** 跨字段约束：本字段（date）不得早于该字段，如 endDate.after = 'startDate' */
+	after?: string;
 }
 
 export type FieldValue = string | number;
 
 // ===== 审批流程 =====
+// 审批单状态
 export type ApplicationStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'withdrawn';
-
+// 审批单操作类型
 export type TransitionAction = 'submit' | 'approve' | 'reject' | 'withdraw';
 
 export interface ApprovalStep {
@@ -57,7 +60,7 @@ export interface ApprovalStep {
 	comment?: string;
 	time?: string;
 }
-
+// 审批动作
 export type AuditAction = 'submit' | 'resubmit' | 'approve' | 'reject' | 'withdraw';
 
 export interface AuditLogEntry {

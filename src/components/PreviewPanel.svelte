@@ -12,6 +12,8 @@
 		errors?: Record<string, string>;
 		onjump?: (name: string) => void;
 	} = $props();
+	console.log('schemas', schemas);
+	console.log('values', values);
 
 	function optionLabel(schema: FieldSchema, value: FieldValue | undefined): string {
 		const raw = String(value ?? '');

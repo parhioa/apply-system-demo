@@ -3,16 +3,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	__resetDb,
 	__setNetworkDelay,
+	aggregateStatistics,
 	getApplications,
 	type CreateApplicationInput
 } from '../services/applicationApi';
+import type { User } from '../types';
 import {
 	applications,
 	loadApplications,
 	loading,
 	runTransition,
 	saveApplication,
-	saveFieldEdit
+	saveFieldEdit,
+	scopeToUser
 } from './applications';
 
 vi.mock('../services/applicationApi', async (importOriginal) => {
@@ -145,5 +148,45 @@ describe('runTransition', () => {
 
 	it('单据不存在时抛出错误', async () => {
 		await expect(runTransition('NOPE', 'approve', '', 'u1')).rejects.toThrow('单据不存在');
+	});
+});
+
+describe('scopeToUser', () => {
+	const applicant: User = { id: 'u1', name: '张三', department: '研发部', role: 'applicant' };
+	const approver: User = { id: 'u2', name: '李四', department: '研发部', role: 'approver' };
+
+	it('审批人可以看到全部申请单', async () => {
+		const all = await getApplications();
+		expect(all.length).toBeGreaterThan(0);
+		expect(scopeToUser(all, approver)).toEqual(all);
+	});
+
+	it('申请人只能看到自己提交的申请单', async () => {
+		const all = await getApplications();
+		const scoped = scopeToUser(all, applicant);
+
+		expect(scoped.length).toBeGreaterThan(0);
+		expect(scoped.length).toBeLessThan(all.length);
+		expect(scoped.every((item) => item.applicantId === applicant.id)).toBe(true);
+	});
+
+	it('未登录时什么都看不到', async () => {
+		const all = await getApplications();
+		expect(scopeToUser(all, null)).toEqual([]);
+	});
+
+	it('没有提交过申请的申请人看到空列表', async () => {
+		const all = await getApplications();
+		const stranger: User = { id: 'u999', name: '幽灵', department: '外部', role: 'applicant' };
+		expect(scopeToUser(all, stranger)).toEqual([]);
+	});
+
+	it('报表聚合只统计申请人自己的单据', async () => {
+		const all = await getApplications();
+		const mine = scopeToUser(all, applicant);
+
+		const mineStats = aggregateStatistics(mine);
+		expect(mineStats.total).toBe(mine.length);
+		expect(mineStats.total).toBeLessThan(aggregateStatistics(all).total);
 	});
 });

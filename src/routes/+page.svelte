@@ -5,6 +5,7 @@
 	import { onMount } from 'svelte';
 
 	onMount(() => {
+		console.log('page mounted');
 		goto(get(currentUser) ? '/list' : '/login');
 	});
 </script>

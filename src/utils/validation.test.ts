@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { FIELD_SCHEMAS } from '../config/schemas';
-import { amountOf, formatTime, summaryOf, validateField, validateFields } from './validation';
+import {
+	amountOf,
+	formatTime,
+	summaryOf,
+	validateCrossFields,
+	validateField,
+	validateFields
+} from './validation';
 import type { ApplicationItem } from '../types';
 
 const travelSchemas = FIELD_SCHEMAS.travel;
@@ -145,6 +152,65 @@ describe('validateFields', () => {
 			extra: 'ignored'
 		});
 		expect(errors).toEqual({});
+	});
+});
+
+describe('validateCrossFields', () => {
+	it('三种申请类型的结束日期早于开始日期都会报错', () => {
+		for (const type of ['travel', 'training', 'leave'] as const) {
+			const errors = validateCrossFields(FIELD_SCHEMAS[type], {
+				startDate: '2026-10-05',
+				endDate: '2026-10-03'
+			});
+			expect(errors).toEqual({ endDate: '结束日期不能早于开始日期' });
+		}
+	});
+
+	it('结束日期等于开始日期通过（当天往返 / 1 天假）', () => {
+		const errors = validateCrossFields(travelSchemas, {
+			startDate: '2026-10-05',
+			endDate: '2026-10-05'
+		});
+		expect(errors).toEqual({});
+	});
+
+	it('结束日期晚于开始日期通过', () => {
+		const errors = validateCrossFields(travelSchemas, {
+			startDate: '2026-10-01',
+			endDate: '2026-10-03'
+		});
+		expect(errors).toEqual({});
+	});
+
+	it('任一端为空时跳过顺序校验，交给必填规则', () => {
+		expect(validateCrossFields(travelSchemas, { startDate: '', endDate: '2026-10-03' })).toEqual(
+			{}
+		);
+		expect(validateCrossFields(travelSchemas, { startDate: '2026-10-03', endDate: '' })).toEqual(
+			{}
+		);
+	});
+
+	it('参照字段已有单字段错误时跳过，不重复报顺序问题', () => {
+		const errors = validateCrossFields(
+			travelSchemas,
+			{ startDate: '2026/10/05', endDate: '2026-10-03' },
+			{ startDate: '开始日期格式不正确' }
+		);
+		expect(errors).toEqual({});
+	});
+
+	it('validateFields 同时返回单字段错误与跨字段错误', () => {
+		const errors = validateFields(travelSchemas, {
+			destination: '',
+			startDate: '2026-10-05',
+			endDate: '2026-10-03',
+			transportation: 'flight',
+			amount: 100,
+			reason: '拜访客户'
+		});
+		expect(errors.destination).toContain('请填写');
+		expect(errors.endDate).toBe('结束日期不能早于开始日期');
 	});
 });
 

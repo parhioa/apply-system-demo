@@ -14,10 +14,16 @@ import {
 } from './applicationApi';
 import { APPROVER_NAME_BY_ROLE, APPLICATION_TYPES, FLOW_BY_TYPE } from '../config/schemas';
 import { allowedActions } from '../machine/stateMachine';
-import type { ApplicationItem, ApplicationStatus, FieldValue, TransitionAction } from '../types';
+import type {
+	ApplicationItem,
+	ApplicationStatus,
+	ApplicationType,
+	FieldValue,
+	TransitionAction
+} from '../types';
 
 const ALL_ACTIONS: TransitionAction[] = ['submit', 'approve', 'reject', 'withdraw'];
-const SEED_COUNT = 9;
+const SEED_COUNT = 15;
 
 const travelInput: CreateApplicationInput = {
 	type: 'travel',
@@ -31,6 +37,26 @@ const travelInput: CreateApplicationInput = {
 		reason: '客户拜访'
 	},
 	submitNow: true
+};
+
+/** 每种类型的合法字段（提交路径必须全字段合法） */
+const validFieldsByType: Record<ApplicationType, Record<string, FieldValue>> = {
+	travel: travelInput.fields,
+	training: {
+		courseName: '前端性能优化',
+		institution: '极客时间',
+		startDate: '2026-11-02',
+		endDate: '2026-11-03',
+		amount: 3200,
+		reason: '提升团队能力'
+	},
+	leave: {
+		leaveType: 'annual',
+		startDate: '2026-11-05',
+		endDate: '2026-11-06',
+		days: 2,
+		reason: '回家探亲'
+	}
 };
 
 function makeItem(partial: Partial<ApplicationItem>): ApplicationItem {
@@ -127,6 +153,14 @@ describe('新建申请', () => {
 		expect(created.flow.every((s) => s.status === 'pending')).toBe(true);
 	});
 
+	it('存为草稿不校验任何字段：残缺、日期倒置都原样保存', async () => {
+		const fields = { destination: '广州', startDate: '2026-10-09', endDate: '2026-10-05' };
+		const created = await createApplication({ ...travelInput, submitNow: false, fields });
+
+		expect(created.status).toBe('draft');
+		expect(created.fields).toEqual(fields);
+	});
+
 	it('申请人不存在时抛错且不落库', async () => {
 		await expect(createApplication({ ...travelInput, applicantId: 'ghost' })).rejects.toThrow(
 			'申请人不存在'
@@ -134,6 +168,25 @@ describe('新建申请', () => {
 		await expect(createApplication({ ...travelInput, applicantId: '' })).rejects.toThrow(
 			'申请人不存在'
 		);
+		expect((await getApplications()).length).toBe(SEED_COUNT);
+	});
+
+	it('直接提交时结束日期早于开始日期被拒绝，且不落库', async () => {
+		await expect(
+			createApplication({
+				...travelInput,
+				fields: { ...travelInput.fields, startDate: '2026-10-09', endDate: '2026-10-05' }
+			})
+		).rejects.toThrow('结束日期不能早于开始日期');
+
+		expect((await getApplications()).length).toBe(SEED_COUNT);
+	});
+
+	it('直接提交时缺必填项被拒绝，且不落库', async () => {
+		await expect(
+			createApplication({ ...travelInput, fields: { destination: '广州' } })
+		).rejects.toThrow('请填写');
+
 		expect((await getApplications()).length).toBe(SEED_COUNT);
 	});
 
@@ -154,7 +207,11 @@ describe('新建申请', () => {
 
 	it('每种申请类型都生成与配置一致的审批链', async () => {
 		for (const meta of APPLICATION_TYPES) {
-			const created = await createApplication({ ...travelInput, type: meta.key });
+			const created = await createApplication({
+				...travelInput,
+				type: meta.key,
+				fields: validFieldsByType[meta.key]
+			});
 			expect(created.flow.map((s) => s.role)).toEqual(FLOW_BY_TYPE[meta.key].map((s) => s.role));
 			expect(created.flow.every((s) => s.name === APPROVER_NAME_BY_ROLE[s.role])).toBe(true);
 		}
@@ -196,6 +253,16 @@ describe('更新字段', () => {
 		expect(updated.fields).toEqual({});
 	});
 
+	it('保存不校验字段：残缺与倒置日期都原样存下', async () => {
+		const before = await getApplicationById('A1003');
+		const fields = { startDate: '2026-09-25', endDate: '2026-09-20' };
+		const updated = await updateApplicationFields('A1003', fields);
+
+		expect(updated.fields).toEqual(fields);
+		expect(updated.status).toBe(before?.status);
+		expect(updated.updateTime >= (before?.updateTime ?? '')).toBe(true);
+	});
+
 	it('单据不存在时抛错', async () => {
 		await expect(updateApplicationFields('NOPE', { a: 1 })).rejects.toThrow('单据不存在');
 		await expect(updateApplicationFields('', { a: 1 })).rejects.toThrow('单据不存在');
@@ -233,7 +300,13 @@ describe('审批流转（多级审批链）', () => {
 	});
 
 	it('驳回后可修改字段并重新提交，审批链重置', async () => {
-		await updateApplicationFields('A1003', { days: 2, reason: '休假两天' });
+		await updateApplicationFields('A1003', {
+			leaveType: 'personal',
+			startDate: '2026-10-12',
+			endDate: '2026-10-13',
+			days: 2,
+			reason: '休假两天'
+		});
 		const resubmitted = await applyTransition('A1003', 'submit', '', 'u1');
 		expect(resubmitted.status).toBe('pending');
 		expect(resubmitted.currentStepIndex).toBe(0);
@@ -247,6 +320,21 @@ describe('审批流转（多级审批链）', () => {
 		expect(item.status).toBe('pending');
 		expect(item.auditLog.at(-1)?.action).toBe('submit');
 		expect(item.auditLog).toHaveLength(1);
+	});
+
+	it('字段不完整的草稿不能直接提交，且状态保持 draft', async () => {
+		const draft = await createApplication({
+			...travelInput,
+			submitNow: false,
+			fields: { destination: '广州' }
+		});
+
+		await expect(applyTransition(draft.id, 'submit', '', 'u1')).rejects.toThrow('请填写');
+
+		const still = await getApplicationById(draft.id);
+		expect(still?.status).toBe('draft');
+		expect(still?.auditLog).toEqual([]);
+		expect(still?.fields).toEqual({ destination: '广州' });
 	});
 
 	it('待审批可撤销 -> withdrawn，且不改动已有审批链状态', async () => {
@@ -365,12 +453,13 @@ describe('统计聚合', () => {
 
 describe('__resetDb', () => {
 	it('重置后回到种子数据，新建的单据消失', async () => {
-		await createApplication(travelInput);
+		const created = await createApplication(travelInput);
 		expect((await getApplications()).length).toBe(SEED_COUNT + 1);
 
 		__resetDb();
 		const restored = await getApplications();
 		expect(restored.length).toBe(SEED_COUNT);
-		expect(restored.every((i) => i.id.startsWith('A100'))).toBe(true);
+		expect(restored.some((i) => i.id === created.id)).toBe(false);
+		expect(restored.some((i) => i.id === 'A1001')).toBe(true);
 	});
 });

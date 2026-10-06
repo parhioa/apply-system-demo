@@ -4,9 +4,11 @@
 	import BaseChart from '../../components/BaseChart.svelte';
 	import { APPLICATION_TYPES, STATUS_META } from '../../config/schemas';
 	import { aggregateStatistics } from '../../services/applicationApi';
-	import { applications, loadApplications } from '../../stores/applications';
+	import { currentUser } from '../../stores/auth';
+	import { applications, loadApplications, scopeToUser } from '../../stores/applications';
 
-	let stats = $derived(aggregateStatistics($applications));
+	const visible = $derived(scopeToUser($applications, $currentUser));
+	let stats = $derived(aggregateStatistics(visible));
 
 	const statusPieOption: EChartsCoreOption = $derived({
 		tooltip: { trigger: 'item' },

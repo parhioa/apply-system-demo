@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import type { ApplicationItem, FieldValue, TransitionAction } from '../types';
+import type { ApplicationItem, FieldValue, TransitionAction, User } from '../types';
 import {
 	applyTransition,
 	createApplication,
@@ -10,6 +10,13 @@ import {
 
 export const applications = writable<ApplicationItem[]>([]);
 export const loading = writable(false);
+
+/** 数据可见范围：审批人看全部，申请人只看自己提交的，未登录什么都看不到 */
+export function scopeToUser(list: ApplicationItem[], user: User | null): ApplicationItem[] {
+	if (!user) return [];
+	if (user.role === 'approver') return list;
+	return list.filter((item) => item.applicantId === user.id);
+}
 
 /** 并发请求计数：只有全部请求结束才置为不加载，避免竞态提前熄灭 loading */
 let pendingCount = 0;
